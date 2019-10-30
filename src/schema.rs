@@ -6,5 +6,5 @@ pub struct Placeholder {
 }
 
 trait Lookup {
-    fn lookup(&self) -> String
+    fn lookup(&self) -> String;
 }
