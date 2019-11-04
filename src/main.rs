@@ -2,6 +2,7 @@ extern crate clap;
 
 pub mod config;
 pub mod schema;
+pub mod secret;
 
 use config::Config;
 use clap::{App, Arg, ArgMatches};
