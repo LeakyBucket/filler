@@ -1,49 +1,88 @@
+extern crate rusoto_core;
+
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs::File;
+use std::io::Read;
+use std::str::from_utf8;
 use std::path::Path;
+use std::process;
 
-const DEFAULT: &'static str = "~/.config/filler/config.toml";
+const DEFAULT: &'static str = "~/.config/filler/config.json";
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
-    commands: Vec<HashMap<String, Command>>,
+    commands: HashMap<String, Command>,
     placeholder: Placeholder,
     file_name: String
 }
 
 impl Config {
     fn new(filename: &str) -> Config {
-        Config::from(filename) 
-    }
-
-    fn default() -> Config {
-        match Path::new(DEFAULT).exists() {
-            true => Config::from(DEFAULT),
-            false => Config::env_only()
-        }
+        Config::from(filename)
     }
 
     fn from(filename: &str) -> Config {
-        let file = File::open(filename);
-    }
+        let file = File::open(filename).unwrap();
+        let mut contents;
 
-    fn env_only() -> Config {
+        file.read(contents);
 
+        let contents = from_utf8(contents).unwrap();
+
+        serde_json::from_str(contents).unwrap()
     }
 }
 
-#[derive(Debug)]
+impl Default for Config {
+    fn default() -> Self {
+        match Path::new(DEFAULT).exists() {
+            true => Config::from(DEFAULT),
+            false => {
+                println!("No config file specified and none found at: {}", DEFAULT);
+                process::exit(1);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Placeholder {
     separator: String,
     opening: String,
     closing: String
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Command {
+    name: String,
     command: String,
     flags: Option<Vec<String>>,
     position: KeyPosition
+}
+
+impl Command {
+    fn run(&self, key: &str) -> Option<String> {
+        let command = match self.position {
+                          KeyPosition::First => {
+                              process::Command::new(self.command)
+                                               .arg(key)
+                                               .args(&flags)
+                                               .output()
+                          },
+                          KeyPosition::Last => {
+                              process::Command::new(self.command)
+                                               .args(&flags)
+                                               .arg(key)
+                                               .output()
+            }
+        };
+
+        match command => {
+            Ok(result) => Some(result.stdout),
+            Err(_) => None
+        }
+    }
 }
 
 #[derive(Debug)]
