@@ -73,6 +73,17 @@ struct Custom {
 
 impl Custom {
     fn get(placeholder: Placeholder, config: Config) -> Custom {
+        let secret = match config.command(placeholder.source.as_str()) {
+            Some(command) => command.run(placeholder.label.as_str()),
+            None => None
+        };
 
+        Custom {
+            secret: Secret {
+                name: placeholder.label,
+                value: secret,
+                version: placeholder.version,
+            }
+        }
     }
 }
