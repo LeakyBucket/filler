@@ -66,7 +66,12 @@ pub struct Command {
 }
 
 impl Command {
-    fn run(&self, key: &str) -> Option<String> {
+    pub fn run(&self, key: &str) -> Option<String> {
+        let flags = match self.flags {
+            Some(f) => f,
+            None => Vec::<String>::new()
+        };
+
         let command = match self.position {
                           KeyPosition::First => {
                               process::Command::new(self.command)
@@ -82,8 +87,13 @@ impl Command {
             }
         };
 
-        match command => {
-            Ok(result) => Some(result.stdout),
+        match command {
+            Ok(result) => {
+                match String::from_utf8(result.stdout) {
+                    Ok(out) => Some(out),
+                    Err(_) => None
+                }
+            },
             Err(_) => None
         }
     }
