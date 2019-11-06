@@ -9,9 +9,12 @@ use clap::{App, Arg, ArgMatches};
 
 fn main() {
     let args = args();
+    let config = Config::new(args.value_of("config"));
+
+    process(args.value_of("target"))
 }
 
-fn args() -> ArgMatches {
+fn args() -> ArgMatches<'static> {
     App::new("filler")
          .version("1.0")
          .about("Fills in config files with sensitive data")
@@ -25,9 +28,6 @@ fn args() -> ArgMatches {
          .get_matches()
 }
 
-fn config(args: ArgMatches) -> Config {
-    match args.value_of("config") {
-        Some(filename) => Config::new(filename),
-        None => Config::default()
-    }
+fn process(target: String) {
+
 }

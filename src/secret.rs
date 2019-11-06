@@ -22,12 +22,12 @@ struct SSM {
 }
 
 impl SSM {
-    fn get(placeholder: Placeholder, config: Config) -> Option<SSM> {
+    fn get(placeholder: Placeholder) -> Option<SSM> {
         let client = SsmClient::new(Region::default());
-        let req = GetParameterRequest{ name: placeholder.label, with_decryption: Some(true) };
+        let req = GetParameterRequest{ name: placeholder.label.clone(), with_decryption: Some(true) };
 
         match client.get_parameter(req).sync() {
-            Err(err) => {
+            Err(_err) => {
                 println!("There was an error fetching {}", placeholder);
 
                 None
@@ -47,8 +47,8 @@ struct Env {
 }
 
 impl Env {
-    fn get(placeholder: Placeholder, config: Config) -> Env {
-        let value = match env::var(placeholder.label) {
+    fn get(placeholder: Placeholder) -> Env {
+        let value = match env::var(&placeholder.label) {
             Ok(value) => Some(value),
             Err(_) => {
                 println!("No value found for {}", placeholder);

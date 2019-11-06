@@ -9,7 +9,7 @@ pub struct Placeholder {
 
 impl fmt::Display for Placeholder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.version {
+        match &self.version {
             Some(ver) => write!(f, "{}:{}:{}", self.source, self.label, ver),
             None => write!(f, "{}:{}", self.source, self.label)
         }

@@ -18,17 +18,20 @@ pub struct Config {
 }
 
 impl Config {
-    fn new(filename: &str) -> Config {
-        Config::from(filename)
+    pub fn new(filename: Option<&str>) -> Config {
+        match filename {
+            Some(filename) => Config::from(filename),
+            None => Config::default()
+        }
     }
 
     fn from(filename: &str) -> Config {
-        let file = File::open(filename).unwrap();
-        let mut contents;
+        let mut file = File::open(filename).unwrap();
+        let mut buffer = Vec::<u8>::new();
 
-        file.read(contents);
+        file.read(buffer.as_mut_slice());
 
-        let contents = from_utf8(contents).unwrap();
+        let contents = from_utf8(buffer.as_mut_slice()).unwrap();
 
         serde_json::from_str(contents).unwrap()
     }
@@ -67,21 +70,22 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, key: &str) -> Option<String> {
-        let flags = match self.flags {
+        let no_args = Vec::<String>::new();
+        let flags = match &self.flags {
             Some(f) => f,
-            None => Vec::<String>::new()
+            None => &no_args
         };
 
         let command = match self.position {
                           KeyPosition::First => {
-                              process::Command::new(self.command)
+                              process::Command::new(&self.command)
                                                .arg(key)
-                                               .args(&flags)
+                                               .args(flags)
                                                .output()
                           },
                           KeyPosition::Last => {
-                              process::Command::new(self.command)
-                                               .args(&flags)
+                              process::Command::new(&self.command)
+                                               .args(flags)
                                                .arg(key)
                                                .output()
             }
