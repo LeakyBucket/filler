@@ -32,6 +32,10 @@ impl Config {
 
         serde_json::from_str(contents).unwrap()
     }
+
+    pub fn command(&self, name: &str) -> Option<&Command> {
+        self.commands.get(name)
+    }
 }
 
 impl Default for Config {
