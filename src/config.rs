@@ -89,7 +89,7 @@ impl Command {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum KeyPosition {
     First,
     Last
