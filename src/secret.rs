@@ -6,7 +6,7 @@ use rusoto_ssm::{GetParameterRequest, Ssm, SsmClient};
 
 use std::env;
 
-use crate::schema::Placeholder;
+use crate::schema::Address;
 use crate::config::Config;
 
 #[derive(Debug)]
@@ -22,7 +22,7 @@ struct SSM {
 }
 
 impl SSM {
-    fn get(placeholder: Placeholder) -> Option<SSM> {
+    fn get(placeholder: Address) -> Option<SSM> {
         let client = SsmClient::new(Region::default());
         let req = GetParameterRequest{ name: placeholder.label.clone(), with_decryption: Some(true) };
 
@@ -47,7 +47,7 @@ struct Env {
 }
 
 impl Env {
-    fn get(placeholder: Placeholder) -> Env {
+    fn get(placeholder: Address) -> Env {
         let value = match env::var(&placeholder.label) {
             Ok(value) => Some(value),
             Err(_) => {
@@ -72,7 +72,7 @@ struct Custom {
 }
 
 impl Custom {
-    fn get(placeholder: Placeholder, config: Config) -> Custom {
+    fn get(placeholder: Address, config: Config) -> Custom {
         let secret = match config.command(placeholder.source.as_str()) {
             Some(command) => command.run(placeholder.label.as_str()),
             None => None
