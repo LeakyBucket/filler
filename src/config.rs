@@ -1,7 +1,10 @@
+extern crate regex;
 extern crate rusoto_core;
 
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -55,6 +58,18 @@ pub struct Placeholder {
     separator: String,
     opening: String,
     closing: String
+}
+
+impl Placeholder {
+    pub fn regex(&self) -> Regex {
+        Regex::new()
+    }
+}
+
+impl fmt::Display for Placeholder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\s*[\w\d-_]{}[\w\d-_]{}[\w\d-_]\s*{}", self.opening, self.separator, self.separator, self.closing)
+    }
 }
 
 #[derive(Debug, Deserialize)]

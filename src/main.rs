@@ -8,12 +8,13 @@ use config::Config;
 use clap::{App, Arg, ArgMatches};
 
 use std::fs::File;
+use std::io::{self, BufReader};
 
 fn main() {
     let args = args();
     let config = Config::new(args.value_of("config"));
 
-    process(args.value_of("target").unwrap())
+    process(args.value_of("target").unwrap(), &config)
 }
 
 fn args() -> ArgMatches<'static> {
@@ -43,10 +44,16 @@ fn args() -> ArgMatches<'static> {
          .get_matches()
 }
 
-fn process(target: &str) {
-    let mut file = File::open(target).unwrap();
-    let mut contents = String::new();
+fn process(target: &str, config: &Config) {
+    let out_file = File::create(config.file_name).unwrap();
+    let in_file = File::open(target).unwrap();
+    let reader = BufReader::new(in_file);
 
-    file.read_to_string(&mut contents).unwrap();
+    for line in reader.lines() {
+        process_line(&mut line)
+    }
+}
+
+fn process_line(line: &mut str) -> &str {
 
 }
