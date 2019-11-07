@@ -4,7 +4,6 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
-use std::str::from_utf8;
 use std::path::Path;
 use std::process;
 
@@ -27,13 +26,11 @@ impl Config {
 
     fn from(filename: &str) -> Config {
         let mut file = File::open(filename).unwrap();
-        let mut buffer = Vec::<u8>::new();
+        let mut contents = String::new();
 
-        file.read(buffer.as_mut_slice());
+        file.read_to_string(&mut contents).unwrap();
 
-        let contents = from_utf8(buffer.as_mut_slice()).unwrap();
-
-        serde_json::from_str(contents).unwrap()
+        serde_json::from_str(contents.as_str()).unwrap()
     }
 
     pub fn command(&self, name: &str) -> Option<&Command> {
