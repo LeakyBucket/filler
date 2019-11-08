@@ -4,7 +4,7 @@ pub mod config;
 pub mod schema;
 pub mod secret;
 
-use config::Config;
+use config::{Config, Placeholder};
 use clap::{App, Arg, ArgMatches};
 
 use std::fs::File;
@@ -45,15 +45,15 @@ fn args() -> ArgMatches<'static> {
 }
 
 fn process(target: &str, config: &Config) {
-    let out_file = File::create(config.file_name).unwrap();
+    let out_file = File::create(&config.file_name).unwrap();
     let in_file = File::open(target).unwrap();
     let reader = BufReader::new(in_file);
 
-    //for line in reader.lines() {
-    //    process_line(&mut line)
-    //}
+    for line in reader.lines() {
+        process_line(&mut line, &config.placeholder)
+    }
 }
 
-//fn process_line(line: &mut str) -> &str {
+fn process_line<'line>(line: &mut str, placeholder: &Placeholder) -> &'line str {
 
-//}
+}
