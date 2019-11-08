@@ -14,9 +14,9 @@ const DEFAULT: &'static str = "~/.config/filler/config.json";
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    commands: HashMap<String, Command>,
-    placeholder: Placeholder,
-    file_name: String
+    pub commands: HashMap<String, Command>,
+    pub placeholder: Placeholder,
+    pub file_name: String
 }
 
 impl Config {
@@ -61,14 +61,25 @@ pub struct Placeholder {
 }
 
 impl Placeholder {
-    pub fn regex(&self) -> Regex {
-        Regex::new()
+    pub fn regex(&self) -> Option<Regex> {
+        match Regex::new(format!("{}", self).as_str()) {
+            Ok(regex) => Some(regex),
+            Err(_) => {
+                println!("Unable to build regex for placeholder pattern: {}, {}, {}", self.opening, self.separator, self.closing);
+                None
+            }
+        }
     }
 }
 
 impl fmt::Display for Placeholder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\s*[\w\d-_]{}[\w\d-_]{}[\w\d-_]\s*{}", self.opening, self.separator, self.separator, self.closing)
+        let escapes = Regex::new(r"(?P<c>[\{\[\}\]\<\>\?\.\*\+])").unwrap();
+        let opening = escapes.replace_all(self.opening.as_str(), "\\$c");
+        let separator = escapes.replace_all(self.separator.as_str(), "\\$c");
+        let closing = escapes.replace_all(self.closing.as_str(), "\\$c");
+
+        write!(f, "{}\\s*(?P<source>[^{}]+){}(?P<label>[^{}]+)({}(?P<version>[^{}]+)\\s*{}|\\s*{})", opening, separator, separator, separator, separator, separator, closing, closing)
     }
 }
 
@@ -120,3 +131,12 @@ pub enum KeyPosition {
     First,
     Last
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn regex_string() {
+        let placeholder = Placeholder{ opening: "{{", separator: ":", closing: "}}"};
+        let regex = format!("{}", placeholder);
+
+        assert_eq!(regex, "\\{\\{\\s*(?P<source>[^\\:]+):(?P<label>[^\\:]+)(\\:(?P<version>[^\\:]+)\\s*\\}\\}|\\s*\\}\\})");
