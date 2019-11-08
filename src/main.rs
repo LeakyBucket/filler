@@ -49,11 +49,11 @@ fn process(target: &str, config: &Config) {
     let in_file = File::open(target).unwrap();
     let reader = BufReader::new(in_file);
 
-    for line in reader.lines() {
-        process_line(&mut line)
-    }
+    //for line in reader.lines() {
+    //    process_line(&mut line)
+    //}
 }
 
-fn process_line(line: &mut str) -> &str {
+//fn process_line(line: &mut str) -> &str {
 
-}
+//}
