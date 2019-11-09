@@ -58,28 +58,15 @@ pub struct Placeholder {
     pub separator: String,
     pub opening: String,
     pub closing: String,
-    regex: Option<Regex>
 }
 
 impl Placeholder {
-    pub fn regex(&self) -> Option<Regex> {
-        match self.regex {
-            Some(regex) => regex,
-            None => {
-                let regex = self.build_regex();
-                self.regex = regex;
-
-                regex
-            }
-        }
-    }
-
-    fn build_regex(&self) -> Option<Regex> {
+    fn regex(&self) -> Regex {
         match Regex::new(format!("{}", self).as_str()) {
-            Ok(regex) => Some(regex),
+            Ok(regex) => regex,
             Err(_) => {
                 println!("Unable to build regex for placeholder pattern: {}, {}, {}", self.opening, self.separator, self.closing);
-                None
+                process::exit(1);
             }
         }
     }
@@ -92,7 +79,7 @@ impl fmt::Display for Placeholder {
         let separator = escapes.replace_all(self.separator.as_str(), "\\$c");
         let closing = escapes.replace_all(self.closing.as_str(), "\\$c");
 
-        write!(f, "({}\\s*(?P<source>[^{}]+){}(?P<label>[^{}]+)({}(?P<version>[^{}^\\s]+)\\s*{}|\\s*{}))", opening, separator, separator, separator, separator, separator, closing, closing)
+        write!(f, "({}\\s*(?P<source>[^{}]+){}(?P<label>[^{}^\\s]+)({}(?P<version>[^{}^\\s]+)\\s*{}|\\s*{}))", opening, separator, separator, separator, separator, separator, closing, closing)
     }
 }
 
@@ -102,7 +89,6 @@ impl Default for Placeholder {
             opening: "".to_string(),
             separator: "".to_string(),
             closing: "".to_string(),
-            regex: None
         }
     }
 }
@@ -162,19 +148,33 @@ mod tests {
 
     #[test]
     fn regex_string() {
-        let placeholder = Placeholder{ regex: None, opening: "{{".to_string(), separator: ":".to_string(), closing: "}}".to_string()};
+        let placeholder = placeholder();
         let regex = format!("{}", placeholder);
 
-        assert_eq!(regex, "(\\{\\{\\s*(?P<source>[^:]+):(?P<label>[^:]+)(:(?P<version>[^:^\\s]+)\\s*\\}\\}|\\s*\\}\\}))");
+        assert_eq!(regex, "(\\{\\{\\s*(?P<source>[^:]+):(?P<label>[^:^\\s]+)(:(?P<version>[^:^\\s]+)\\s*\\}\\}|\\s*\\}\\}))");
     }
 
     #[test]
-    fn regex_match() {
-        let placeholder = Placeholder{ regex: None, opening: "{{".to_string(), separator: ":".to_string(), closing: "}}".to_string()};
-        let captures = placeholder.regex().unwrap().captures("{{ ssm:target:3 }}").unwrap();
+    fn versioned_match() {
+        let placeholder = placeholder();
+        let captures = placeholder.regex().captures("{{ ssm:target:3 }}").unwrap();
 
         assert_eq!(captures.name("source").unwrap().as_str(), "ssm");
         assert_eq!(captures.name("label").unwrap().as_str(), "target");
         assert_eq!(captures.name("version").unwrap().as_str(), "3");
+    }
+
+    #[test]
+    fn versionless_match() {
+        let placeholder = placeholder();
+        let captures = placeholder.regex().captures("{{ ssm:target }}").unwrap();
+
+        assert_eq!(captures.name("source").unwrap().as_str(), "ssm");
+        assert_eq!(captures.name("label").unwrap().as_str(), "target");
+        assert_eq!(captures.name("version"), None);
+    }
+
+    fn placeholder() -> Placeholder {
+        Placeholder{ opening: "{{".to_string(), separator: ":".to_string(), closing: "}}".to_string()}
     }
 }
