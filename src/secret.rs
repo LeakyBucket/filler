@@ -87,3 +87,35 @@ impl Custom {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{Command, Placeholder};
+    use std::collections::HashMap;
+
+    #[test]
+    fn ssm_fetch() {
+        let address = Address{ source: "ssm".to_string(), label: "GlenTest".to_string(), version: Some("1".to_string()) };
+        let value = SSM::get(address);
+
+        assert_eq!(value.unwrap().secret.value, Some("Result".to_string()));
+    }
+
+    #[test]
+    fn env_fetch() {
+        let address = Address{ source: "env".to_string(), label: "TEST".to_string(), version: Some("2".to_string()) };
+        let value = Env::get(address);
+
+        assert_eq!(value.secret.value, Some("Result".to_string()));
+    }
+
+    #[test]
+    fn custom_fetch() {
+        let address = Address{ source: "credstash".to_string(), label: "test".to_string(), version: Some("8".to_string()) };
+        let config = Config{ commands: HashMap::<String, Command>::new(), placeholder: Placeholder::default(), file_name: "".to_string() };
+        let value = Custom::get(address, config);
+
+        assert_eq!(value.secret.value, Some("Result".to_string()));
+    }
+}
