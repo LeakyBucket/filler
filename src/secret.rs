@@ -11,78 +11,102 @@ use crate::config::Config;
 
 #[derive(Debug)]
 pub struct Secret {
-    name: String,
-    value: Option<String>,
-    version: Option<String>,
+    pub name: String,
+    pub value: String,
+    pub version: Option<String>,
 }
 
 #[derive(Debug)]
-struct SSM {
-    secret: Secret
+pub struct SSM {
+    pub secret: Option<Secret>
 }
 
 impl SSM {
-    fn get(placeholder: Address) -> Option<SSM> {
+    pub fn get(placeholder: &Address) -> SSM {
         let client = SsmClient::new(Region::default());
-        let req = GetParameterRequest{ name: placeholder.label.clone(), with_decryption: Some(true) };
+        let req = GetParameterRequest{ name: placeholder.label.to_string(), with_decryption: Some(true) };
 
         match client.get_parameter(req).sync() {
             Err(_err) => {
                 println!("There was an error fetching {}", placeholder);
 
-                None
+                SSM{secret: None}
             },
             Ok(res) => {
-                let secret = Secret{ name: placeholder.label, value: res.parameter?.value, version: None};
-
-                Some(SSM{secret})
+                match res.parameter {
+                    None => SSM{secret: None},
+                    Some(value) => {
+                        match value.value {
+                            None => SSM{secret: None},
+                            Some(actual_value) => {
+                                SSM {
+                                    secret: Some(Secret {
+                                        name: placeholder.label.to_owned(),
+                                        value: actual_value,
+                                        version: None
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 #[derive(Debug)]
-struct Env {
-    secret: Secret
+pub struct Env {
+    pub secret: Option<Secret>
 }
 
 impl Env {
-    fn get(placeholder: Address) -> Env {
-        let value = match env::var(&placeholder.label) {
-            Ok(value) => Some(value),
+    pub fn get(placeholder: &Address) -> Env {
+        match env::var(&placeholder.label) {
             Err(_) => {
                 println!("No value found for {}", placeholder);
-                None
-            }
-        };
-
-        Env {
-            secret: Secret {
-                name: placeholder.label,
-                value: value,
-                version: None
+                Env{ secret: None }
+            },
+            Ok(value) => {
+                Env {
+                    secret: Some(Secret {
+                        name: placeholder.label.to_string(),
+                        value: value,
+                        version: None
+                    })
+                }
             }
         }
     }
 }
 
 #[derive(Debug)]
-struct Custom {
-    secret: Secret
+pub struct Custom {
+    pub secret: Option<Secret>
 }
 
 impl Custom {
-    fn get(placeholder: Address, config: Config) -> Custom {
-        let secret = match config.command(placeholder.source.as_str()) {
-            Some(command) => command.run(placeholder.label.as_str()),
+    pub fn get(placeholder: &Address, config: &Config) -> Custom {
+        let secret = match config.command(placeholder.source) {
+            Some(command) => command.run(placeholder.label),
             None => None
         };
 
-        Custom {
-            secret: Secret {
-                name: placeholder.label,
-                value: secret,
-                version: placeholder.version,
+        let version = match placeholder.version {
+            Some(ver) => Some(ver.to_owned()),
+            None => None
+        };
+
+        match secret {
+            None => Custom{secret: None},
+            Some(value) => {
+                Custom {
+                    secret: Some(Secret {
+                        name: placeholder.label.to_string(),
+                        value,
+                        version
+                    })
+                }
             }
         }
     }
@@ -96,26 +120,26 @@ mod tests {
 
     #[test]
     fn ssm_fetch() {
-        let address = Address{ source: "ssm".to_string(), label: "GlenTest".to_string(), version: Some("1".to_string()) };
-        let value = SSM::get(address);
+        let address = Address{ source: "ssm", label: "GlenTest", version: Some("1") };
+        let value = SSM::get(&address);
 
-        assert_eq!(value.unwrap().secret.value, Some("Result".to_string()));
+        assert_eq!(value.secret.unwrap().value, "Result".to_string());
     }
 
     #[test]
     fn env_fetch() {
-        let address = Address{ source: "env".to_string(), label: "TEST".to_string(), version: Some("2".to_string()) };
-        let value = Env::get(address);
+        let address = Address{ source: "env", label: "TEST", version: Some("2") };
+        let value = Env::get(&address);
 
-        assert_eq!(value.secret.value, Some("Result".to_string()));
+        assert_eq!(value.secret.unwrap().value, "Result".to_string());
     }
 
     #[test]
     fn custom_fetch() {
-        let address = Address{ source: "credstash".to_string(), label: "test".to_string(), version: Some("8".to_string()) };
+        let address = Address{ source: "credstash", label: "test", version: Some("8") };
         let config = Config{ commands: HashMap::<String, Command>::new(), placeholder: Placeholder::default(), file_name: "".to_string() };
-        let value = Custom::get(address, config);
+        let value = Custom::get(&address, &config);
 
-        assert_eq!(value.secret.value, Some("Result".to_string()));
+        assert_eq!(value.secret.unwrap().value, "Result".to_string());
     }
 }

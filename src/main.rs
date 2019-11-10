@@ -1,14 +1,21 @@
 extern crate clap;
+extern crate regex;
 
 pub mod config;
 pub mod schema;
 pub mod secret;
 
+use schema::Context;
+
 use config::{Config, Placeholder};
 use clap::{App, Arg, ArgMatches};
+use regex::Captures;
 
 use std::fs::File;
 use std::io::{self, BufReader};
+use std::io::prelude::*;
+use std::path::Path;
+use std::process;
 
 fn main() {
     let args = args();
@@ -45,15 +52,32 @@ fn args() -> ArgMatches<'static> {
 }
 
 fn process(target: &str, config: &Config) {
-    let out_file = File::create(&config.file_name).unwrap();
-    let in_file = File::open(target).unwrap();
+    let mut out_file = File::create(Path::new(&config.file_name)).unwrap();
+    let in_file = File::open(Path::new(target)).unwrap();
     let reader = BufReader::new(in_file);
+    let regex = config.placeholder.regex();
 
     for line in reader.lines() {
-        process_line(&mut line, &config.placeholder)
+        match line {
+            Ok(line) => {
+                let new_line = regex.replace_all(&line, |caps: &Captures| {
+                    let source = caps.name("source").unwrap().as_str();
+                    let label = caps.name("label").unwrap().as_str();
+                    let version = match caps.name("version") {
+                        Some(cap) => Some(cap.as_str()),
+                        None => None
+                    };
+                    let context = Context::new(&config.placeholder, source, label, version);
+
+                    context.evaluate(config)
+                });
+
+                out_file.write(new_line.as_bytes());
+            },
+            Err(_) => {
+                println!("Error reading {}", target);
+                process::exit(1);
+            }
+        }
     }
-}
-
-fn process_line<'line>(line: &mut str, placeholder: &Placeholder) -> &'line str {
-
 }

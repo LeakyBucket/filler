@@ -15,6 +15,7 @@ const DEFAULT: &'static str = "~/.config/filler/config.json";
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub commands: HashMap<String, Command>,
+    #[serde(default)]
     pub placeholder: Placeholder,
     pub file_name: String
 }
@@ -28,7 +29,8 @@ impl Config {
     }
 
     fn from(filename: &str) -> Config {
-        let mut file = File::open(filename).unwrap();
+        let path = Path::new(filename);
+        let mut file = File::open(path).unwrap();
         let mut contents = String::new();
 
         file.read_to_string(&mut contents).unwrap();
@@ -43,7 +45,9 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        match Path::new(DEFAULT).exists() {
+        let path = Path::new(DEFAULT);
+
+        match Path::new(path).exists() {
             true => Config::from(DEFAULT),
             false => {
                 println!("No config file specified and none found at: {}", DEFAULT);
@@ -55,13 +59,16 @@ impl Default for Config {
 
 #[derive(Debug, Deserialize)]
 pub struct Placeholder {
+    #[serde(default)]
     pub separator: String,
+    #[serde(default)]
     pub opening: String,
+    #[serde(default)]
     pub closing: String,
 }
 
 impl Placeholder {
-    fn regex(&self) -> Regex {
+    pub fn regex(&self) -> Regex {
         match Regex::new(format!("{}", self).as_str()) {
             Ok(regex) => regex,
             Err(_) => {
@@ -75,9 +82,9 @@ impl Placeholder {
 impl fmt::Display for Placeholder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let escapes = Regex::new(r"(?P<c>[\{\[\}\]\?\.\*\+])").unwrap();
-        let opening = escapes.replace_all(self.opening.as_str(), "\\$c");
-        let separator = escapes.replace_all(self.separator.as_str(), "\\$c");
-        let closing = escapes.replace_all(self.closing.as_str(), "\\$c");
+        let opening = escapes.replace_all(self.opening.as_str(), r"\$c");
+        let separator = escapes.replace_all(self.separator.as_str(), r"\$c");
+        let closing = escapes.replace_all(self.closing.as_str(), r"\$c");
 
         write!(f, "({}\\s*(?P<source>[^{}]+){}(?P<label>[^{}^\\s]+)({}(?P<version>[^{}^\\s]+)\\s*{}|\\s*{}))", opening, separator, separator, separator, separator, separator, closing, closing)
     }
@@ -86,9 +93,9 @@ impl fmt::Display for Placeholder {
 impl Default for Placeholder {
     fn default() -> Self {
         Placeholder {
-            opening: "".to_string(),
-            separator: "".to_string(),
-            closing: "".to_string(),
+            opening: "{{".to_string(),
+            separator: ":".to_string(),
+            closing: "}}".to_string(),
         }
     }
 }
@@ -148,7 +155,7 @@ mod tests {
 
     #[test]
     fn regex_string() {
-        let placeholder = placeholder();
+        let placeholder = Placeholder::default();
         let regex = format!("{}", placeholder);
 
         assert_eq!(regex, "(\\{\\{\\s*(?P<source>[^:]+):(?P<label>[^:^\\s]+)(:(?P<version>[^:^\\s]+)\\s*\\}\\}|\\s*\\}\\}))");
@@ -156,7 +163,7 @@ mod tests {
 
     #[test]
     fn versioned_match() {
-        let placeholder = placeholder();
+        let placeholder = Placeholder::default();
         let captures = placeholder.regex().captures("{{ ssm:target:3 }}").unwrap();
 
         assert_eq!(captures.name("source").unwrap().as_str(), "ssm");
@@ -166,7 +173,7 @@ mod tests {
 
     #[test]
     fn versionless_match() {
-        let placeholder = placeholder();
+        let placeholder = Placeholder::default();
         let captures = placeholder.regex().captures("{{ ssm:target }}").unwrap();
 
         assert_eq!(captures.name("source").unwrap().as_str(), "ssm");
@@ -174,7 +181,29 @@ mod tests {
         assert_eq!(captures.name("version"), None);
     }
 
-    fn placeholder() -> Placeholder {
-        Placeholder{ opening: "{{".to_string(), separator: ":".to_string(), closing: "}}".to_string()}
+    #[test]
+    fn user_defined_placeholder() {
+        let placeholder = custom_placeholder();
+        let captures = placeholder.regex().captures("[[ env,target,version ]]").unwrap();
+
+        assert_eq!(captures.name("source").unwrap().as_str(), "env");
+        assert_eq!(captures.name("label").unwrap().as_str(), "target");
+        assert_eq!(captures.name("version").unwrap().as_str(), "version");
+    }
+
+    fn custom_placeholder() -> Placeholder {
+        Placeholder{ opening: "[[".to_string(), separator: ",".to_string(), closing: "]]".to_string()}
+    }
+
+    #[test]
+    fn config() {
+        let config = Config::new(Some("support/config.json"));
+        let placeholder = &config.placeholder;
+        let commands = &config.commands;
+
+        assert_eq!(placeholder.opening, "{{");
+        assert_eq!(placeholder.separator, ":");
+        assert_eq!(placeholder.closing, "}}");
+        assert_eq!(commands.len(), 1);
     }
 }
