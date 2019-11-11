@@ -102,7 +102,6 @@ impl Default for Placeholder {
 
 #[derive(Debug, Deserialize)]
 pub struct Command {
-    name: String,
     command: String,
     flags: Option<Vec<String>>,
     position: KeyPosition
