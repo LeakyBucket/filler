@@ -18,7 +18,6 @@ pub struct Config {
     pub commands: HashMap<String, Command>,
     #[serde(default)]
     pub placeholder: Placeholder,
-    pub file_name: String
 }
 
 impl Config {

@@ -21,7 +21,7 @@ fn main() {
     let args = args();
     let config = Config::new(args.value_of("config"));
 
-    process(args.value_of("target").unwrap(), &config)
+    process(&args, &config)
 }
 
 fn args() -> ArgMatches<'static> {
@@ -51,8 +51,13 @@ fn args() -> ArgMatches<'static> {
          .get_matches()
 }
 
-fn process(target: &str, config: &Config) {
-    let mut out_file = File::create(Path::new(&config.file_name)).unwrap();
+fn process(args: &ArgMatches, config: &Config) {
+    let target = args.value_of("target").unwrap();
+    let output = match args.value_of("output") {
+        Some(out) => out.to_owned(),
+        None => format!("{}.filled", args.value_of("target").unwrap())
+    };
+    let mut out_file = File::create(Path::new(&output)).unwrap();
     let in_file = File::open(Path::new(target)).unwrap();
     let reader = BufReader::new(in_file);
     let regex = config.placeholder.regex();
