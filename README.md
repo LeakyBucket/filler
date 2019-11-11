@@ -61,8 +61,7 @@ Filler does expect a configuration file which is currently `JSON` format:
       ],
       "position": "Last"
     }
-  },
-  "file_name": "filler_default"
+  }
 }
 ```
 
