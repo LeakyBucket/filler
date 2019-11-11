@@ -36,8 +36,6 @@ fn args() -> ArgMatches<'static> {
               .help("specify a config file")
               .takes_value(true))
          .arg(Arg::with_name("target")
-              .short("t")
-              .long("target")
               .value_name("target")
               .help("the file to be processed")
               .required(true)
@@ -46,14 +44,14 @@ fn args() -> ArgMatches<'static> {
               .short("o")
               .long("output")
               .value_name("out")
-              .help("the output file to generate, if omitted the target file will be updated in place")
+              .help("the output file to generate, if omitted the target file name will have .filled appended to it")
               .takes_value(true))
          .get_matches()
 }
 
 fn process(args: &ArgMatches, config: &Config) {
     let target = args.value_of("target").unwrap();
-    let output = match args.value_of("output") {
+    let output = match args.value_of("out") {
         Some(out) => out.to_owned(),
         None => format!("{}.filled", args.value_of("target").unwrap())
     };
