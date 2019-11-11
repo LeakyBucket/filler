@@ -5,6 +5,7 @@ name = "filler"
 version = "0.1.0"
 [dependencies]
 clap = "*"
+dirs = "*"
 regex = "*"
 rusoto_core = "0.41.0"
 rusoto_ssm = "0.41.0"
