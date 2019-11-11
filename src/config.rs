@@ -1,3 +1,4 @@
+extern crate dirs;
 extern crate regex;
 extern crate rusoto_core;
 
@@ -10,7 +11,7 @@ use std::io::Read;
 use std::path::Path;
 use std::process;
 
-const DEFAULT: &'static str = "~/.config/filler/config.json";
+const DEFAULT: &'static str = "/.config/filler/config.json";
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -45,12 +46,20 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let path = Path::new(DEFAULT);
+        let home = match dirs::home_dir() {
+            Some(place) => place,
+            None => {
+                println!("Cannot determine home directory (for default config)");
+                process::exit(1);
+            }
+        };
+        let default_config = format!("{}{}", home.as_path().display(), DEFAULT);
+        let path = Path::new(&default_config);
 
         match Path::new(path).exists() {
-            true => Config::from(DEFAULT),
+            true => Config::from(&default_config),
             false => {
-                println!("No config file specified and none found at: {}", DEFAULT);
+                println!("No config file specified and none found at: {}{}", home.as_path().display(), DEFAULT);
                 process::exit(1);
             }
         }
