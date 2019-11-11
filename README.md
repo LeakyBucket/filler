@@ -4,6 +4,32 @@ Filler is a dumb tool for putting things into things.  Say for some awful reason
 
 Are you stuck in a paper sack that you can't get out of?  If so read on...
 
+## Example
+
+First a maybe contrived example.  Let's say I need to get data from the environment, `SSM` and a snippet into the following file:
+
+```
+[Stuff]
+
+env.thing={{ env:SUB }}
+ssm.data={{ ssm:SSMTarget }}
+
+{{ cat:snippet.ini }}
+```
+
+With the following configuration I could generate the desired file:
+
+```
+{
+  "commands": {
+    "cat": {
+      "command": "cat",
+      "position": "Last"
+    }
+  }
+}
+```
+
 ## Sources
 
 * Env
