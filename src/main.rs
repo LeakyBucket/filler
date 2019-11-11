@@ -73,6 +73,7 @@ fn process(target: &str, config: &Config) {
                 });
 
                 out_file.write(new_line.as_bytes());
+                out_file.write(b"\n");
             },
             Err(_) => {
                 println!("Error reading {}", target);
