@@ -7,12 +7,12 @@ pub mod secret;
 
 use schema::Context;
 
-use config::{Config, Placeholder};
+use config::Config;
 use clap::{App, Arg, ArgMatches};
 use regex::Captures;
 
 use std::fs::File;
-use std::io::{self, BufReader};
+use std::io::BufReader;
 use std::io::prelude::*;
 use std::path::Path;
 use std::process;
@@ -75,8 +75,8 @@ fn process(args: &ArgMatches, config: &Config) {
                     context.evaluate(config)
                 });
 
-                out_file.write(new_line.as_bytes());
-                out_file.write(b"\n");
+                out_file.write(new_line.as_bytes()).expect("Unable to write to output file!");
+                out_file.write(b"\n").expect("Unable to write to output file!");
             },
             Err(_) => {
                 println!("Error reading {}", target);

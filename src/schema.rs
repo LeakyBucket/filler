@@ -24,7 +24,7 @@ impl Context<'_> {
         let result = match self.address.source {
             "ssm" => SSM::get(&self.address).secret,
             "env" => Env::get(&self.address).secret,
-            src => Custom::get(&self.address, config).secret
+            _src => Custom::get(&self.address, config).secret
         };
 
         if let Some(secret) = result {
