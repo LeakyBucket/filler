@@ -8,7 +8,7 @@ Are you stuck in a paper sack that you can't get out of?  If so read on...
 
 First a maybe contrived example.  Let's say I need to get data from the environment, `SSM` and a snippet into the following file:
 
-```
+```ini
 [Stuff]
 
 env.thing={{ env:SUB }}
@@ -19,7 +19,7 @@ ssm.data={{ ssm:SSMTarget }}
 
 With the following configuration I could generate the desired file:
 
-```
+```json
 {
   "commands": {
     "cat": {
@@ -44,7 +44,7 @@ The AWS SSM Parameter store is similar, unless you have changed the defaults sim
 
 The third source is kind of a gaint bucket of "whatever".  Filler supports the definition of "custom" commands for retrieving data.  A custom command is defined as follows:
 
-```
+```json
   "commands": {
     "cat": {
       "command": "cat",
@@ -72,7 +72,7 @@ Filler will execute the command and then replace the marker with the output of t
 
 Filler does expect a configuration file which is currently `JSON` format:
 
-```
+```json
 {
   "placeholder": {
     "opening": "[[",
