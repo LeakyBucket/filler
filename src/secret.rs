@@ -27,8 +27,11 @@ impl SSM {
         let req = GetParameterRequest{ name: placeholder.label.to_string(), with_decryption: Some(true) };
 
         match client.get_parameter(req).sync() {
-            Err(_err) => {
+            Err(err) => {
                 println!("There was an error fetching {}", placeholder);
+                if env::var("FILLER_DEBUG") == Ok("1".to_string()) {
+                    println!("{:?}", err);
+                }
 
                 SSM{secret: None}
             },
