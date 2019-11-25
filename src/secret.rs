@@ -91,7 +91,7 @@ pub struct Custom {
 impl Custom {
     pub fn get(placeholder: &Address, config: &Config) -> Custom {
         let secret = match config.command(placeholder.source) {
-            Some(command) => command.run(placeholder.label),
+            Some(command) => command.run(placeholder.label, placeholder.version),
             None => None
         };
 
@@ -131,6 +131,7 @@ mod tests {
 
     #[test]
     fn env_fetch() {
+        env::set_var("TEST", "Result");
         let address = Address{ source: "env", label: "TEST", version: Some("2") };
         let value = Env::get(&address);
 
@@ -140,7 +141,7 @@ mod tests {
     #[test]
     fn custom_fetch() {
         let address = Address{ source: "credstash", label: "test", version: Some("8") };
-        let config = Config{ commands: HashMap::<String, Command>::new(), placeholder: Placeholder::default(), file_name: "".to_string() };
+        let config = Config{ commands: HashMap::<String, Command>::new(), placeholder: Placeholder::default() };
         let value = Custom::get(&address, &config);
 
         assert_eq!(value.secret.unwrap().value, "Result".to_string());

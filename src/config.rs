@@ -112,16 +112,26 @@ impl Default for Placeholder {
 pub struct Command {
     command: String,
     flags: Option<Vec<String>>,
+    version: Option<VersionArg>,
     position: KeyPosition
 }
 
 impl Command {
-    pub fn run(&self, key: &str) -> Option<String> {
+    pub fn run(&self, key: &str, ver: Option<&str>) -> Option<String> {
         let no_args = Vec::<String>::new();
-        let flags = match &self.flags {
-            Some(f) => f,
-            None => &no_args
+        let flags = match &self.version {
+            Some(v) => {
+                let mut v_flags = v.for_value(ver).unwrap_or(Vec::<String>::new());
+                let mut all_flags = self.flags.as_ref().unwrap_or(&no_args).clone();
+                all_flags.append(&mut v_flags);
+
+                all_flags
+            },
+            None => {
+                self.flags.as_ref().unwrap_or(&no_args).to_vec()
+            }
         };
+
 
         let command = match self.position {
                           KeyPosition::First => {
@@ -147,6 +157,42 @@ impl Command {
             },
             Err(_) => None
         }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct VersionArg {
+    flag: Option<String>,
+    #[serde(default)]
+    format: VersionFormat
+}
+
+impl VersionArg {
+    pub fn for_value(&self, ver: Option<&str>) -> Option<Vec<String>> {
+        if let None = ver {
+            return None
+        }
+
+        if let Some(flag) = &self.flag {
+            match self.format {
+                VersionFormat::Disperate => Some(vec![flag.clone(), ver.unwrap().to_owned()]),
+                VersionFormat::Concatinate => Some(vec![format!("{}{}", flag, ver.unwrap().to_owned())])
+            }
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub enum VersionFormat {
+    Concatinate,
+    Disperate
+}
+
+impl Default for VersionFormat {
+    fn default() -> Self {
+        VersionFormat::Disperate
     }
 }
 

@@ -58,9 +58,11 @@ impl fmt::Display for Address<'_> {
 mod tests {
     use super::*;
     use crate::config::Config;
+    use std::env;
 
     #[test]
     fn sub_with_value() {
+        env::set_var("TEST", "Result");
         let config = Config::default();
         let placeholder = Placeholder::default();
 
