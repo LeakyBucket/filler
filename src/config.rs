@@ -24,7 +24,7 @@ impl Config {
     pub fn new(filename: Option<&str>) -> Config {
         match filename {
             Some(filename) => Config::from(filename),
-            None => Config::default()
+            None => Config::default(),
         }
     }
 
@@ -58,7 +58,11 @@ impl Default for Config {
         match Path::new(path).exists() {
             true => Config::from(&default_config),
             false => {
-                println!("No config file specified and none found at: {}{}", home.as_path().display(), DEFAULT);
+                println!(
+                    "No config file specified and none found at: {}{}",
+                    home.as_path().display(),
+                    DEFAULT
+                );
                 process::exit(1);
             }
         }
@@ -80,7 +84,10 @@ impl Placeholder {
         match Regex::new(format!("{}", self).as_str()) {
             Ok(regex) => regex,
             Err(_) => {
-                println!("Unable to build regex for placeholder pattern: {}, {}, {}", self.opening, self.separator, self.closing);
+                println!(
+                    "Unable to build regex for placeholder pattern: {}, {}, {}",
+                    self.opening, self.separator, self.closing
+                );
                 process::exit(1);
             }
         }
@@ -113,7 +120,7 @@ pub struct Command {
     command: String,
     flags: Option<Vec<String>>,
     version: Option<VersionArg>,
-    position: KeyPosition
+    position: KeyPosition,
 }
 
 impl Command {
@@ -126,36 +133,27 @@ impl Command {
                 all_flags.append(&mut v_flags);
 
                 all_flags
-            },
-            None => {
-                self.flags.as_ref().unwrap_or(&no_args).to_vec()
             }
+            None => self.flags.as_ref().unwrap_or(&no_args).to_vec(),
         };
 
-
         let command = match self.position {
-                          KeyPosition::First => {
-                              process::Command::new(&self.command)
-                                               .arg(key)
-                                               .args(flags)
-                                               .output()
-                          },
-                          KeyPosition::Last => {
-                              process::Command::new(&self.command)
-                                               .args(flags)
-                                               .arg(key)
-                                               .output()
-            }
+            KeyPosition::First => process::Command::new(&self.command)
+                .arg(key)
+                .args(flags)
+                .output(),
+            KeyPosition::Last => process::Command::new(&self.command)
+                .args(flags)
+                .arg(key)
+                .output(),
         };
 
         match command {
-            Ok(result) => {
-                match String::from_utf8(result.stdout) {
-                    Ok(out) => Some(out),
-                    Err(_) => None
-                }
+            Ok(result) => match String::from_utf8(result.stdout) {
+                Ok(out) => Some(out),
+                Err(_) => None,
             },
-            Err(_) => None
+            Err(_) => None,
         }
     }
 }
@@ -164,19 +162,21 @@ impl Command {
 pub struct VersionArg {
     flag: Option<String>,
     #[serde(default)]
-    format: VersionFormat
+    format: VersionFormat,
 }
 
 impl VersionArg {
     pub fn for_value(&self, ver: Option<&str>) -> Option<Vec<String>> {
         if let None = ver {
-            return None
+            return None;
         }
 
         if let Some(flag) = &self.flag {
             match self.format {
                 VersionFormat::Disperate => Some(vec![flag.clone(), ver.unwrap().to_owned()]),
-                VersionFormat::Concatinate => Some(vec![format!("{}{}", flag, ver.unwrap().to_owned())])
+                VersionFormat::Concatinate => {
+                    Some(vec![format!("{}{}", flag, ver.unwrap().to_owned())])
+                }
             }
         } else {
             None
@@ -187,7 +187,7 @@ impl VersionArg {
 #[derive(Debug, Deserialize)]
 pub enum VersionFormat {
     Concatinate,
-    Disperate
+    Disperate,
 }
 
 impl Default for VersionFormat {
@@ -199,7 +199,7 @@ impl Default for VersionFormat {
 #[derive(Debug, Deserialize)]
 pub enum KeyPosition {
     First,
-    Last
+    Last,
 }
 
 #[cfg(test)]
@@ -237,7 +237,10 @@ mod tests {
     #[test]
     fn user_defined_placeholder() {
         let placeholder = custom_placeholder();
-        let captures = placeholder.regex().captures("[[ env,target,version ]]").unwrap();
+        let captures = placeholder
+            .regex()
+            .captures("[[ env,target,version ]]")
+            .unwrap();
 
         assert_eq!(captures.name("source").unwrap().as_str(), "env");
         assert_eq!(captures.name("label").unwrap().as_str(), "target");
@@ -245,7 +248,11 @@ mod tests {
     }
 
     fn custom_placeholder() -> Placeholder {
-        Placeholder{ opening: "[[".to_string(), separator: ",".to_string(), closing: "]]".to_string()}
+        Placeholder {
+            opening: "[[".to_string(),
+            separator: ",".to_string(),
+            closing: "]]".to_string(),
+        }
     }
 
     #[test]

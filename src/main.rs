@@ -7,13 +7,13 @@ pub mod secret;
 
 use schema::Context;
 
-use config::Config;
 use clap::{App, Arg, ArgMatches};
+use config::Config;
 use regex::Captures;
 
 use std::fs::File;
-use std::io::BufReader;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::Path;
 use std::process;
 
@@ -53,7 +53,7 @@ fn process(args: &ArgMatches, config: &Config) {
     let target = args.value_of("target").unwrap();
     let output = match args.value_of("out") {
         Some(out) => out.to_owned(),
-        None => format!("{}.filled", args.value_of("target").unwrap())
+        None => format!("{}.filled", args.value_of("target").unwrap()),
     };
     let mut out_file = File::create(Path::new(&output)).unwrap();
     let in_file = File::open(Path::new(target)).unwrap();
@@ -68,16 +68,20 @@ fn process(args: &ArgMatches, config: &Config) {
                     let label = caps.name("label").unwrap().as_str();
                     let version = match caps.name("version") {
                         Some(cap) => Some(cap.as_str()),
-                        None => None
+                        None => None,
                     };
                     let context = Context::new(&config.placeholder, source, label, version);
 
                     context.evaluate(config)
                 });
 
-                out_file.write(new_line.as_bytes()).expect("Unable to write to output file!");
-                out_file.write(b"\n").expect("Unable to write to output file!");
-            },
+                out_file
+                    .write(new_line.as_bytes())
+                    .expect("Unable to write to output file!");
+                out_file
+                    .write(b"\n")
+                    .expect("Unable to write to output file!");
+            }
             Err(_) => {
                 println!("Error reading {}", target);
                 process::exit(1);
