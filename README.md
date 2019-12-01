@@ -52,17 +52,25 @@ With the following configuration I could generate the desired file:
 
 ## Sources
 
+Filler supports two "native" sources and then allows for the definition of "custom" sources as well.
+
 * Env
 * SSM Parameter Store (AWS)
 * Custom definitions
 
-Let's start with the first two as they are the most straight forward:
+### Env
 
 Like most things Filler can pull data out of it's environment, in order to specify a value that should be found in the environment use the following format (unless you've changed the format): `{{ env:KEY }}`.  Whenever that pattern is found it will be replaced with whatever is found in that environment variable.  If there is no value for that env var the key will remain in place (maybe the next person/context is also in a bad spot but they have that data).
 
+### SSM Parameter Store
+
 The AWS SSM Parameter store is similar, unless you have changed the defaults simply use `{{ ssm:RDSPassword }}` to pull data out of Parameter Store.  Similar to the env behavior if there is no value then the pattern will remain in the file for potential future processing.
 
-### Commands
+When using the Parameter Store `filler` will attempt to find auth credentials through the normal `AWS` channels.
+
+**Note**: If you are using Parameter Store make sure that the `AWS_DEFAULT_REGION` or `AWS_REGION` environment variables set.  `filler` needs this in order to properly authenticate against the `AWS` API.
+
+### Custom Definitions
 
 The third source is kind of a gaint bucket of "whatever".  Filler supports the definition of "custom" commands for retrieving data.  A custom command is defined as follows:
 
