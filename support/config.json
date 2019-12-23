@@ -8,7 +8,12 @@
                 "format": "Disperate"
             },
             "position": "Last"
-        }
+        },
+	"echo": {
+            "name": "echo",
+	    "command": "echo",
+	    "position": "Last"
+	}
     },
     "file_name": "whatever"
 }

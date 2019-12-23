@@ -111,20 +111,20 @@ impl Custom {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Command, Placeholder};
+    use crate::config::{Command, KeyPosition, Placeholder};
     use std::collections::HashMap;
 
-    #[test]
-    fn ssm_fetch() {
-        let address = Address {
-            source: "ssm",
-            label: "GlenTest",
-            version: Some("1"),
-        };
-        let value = SSM::get(&address);
-
-        assert_eq!(value.secret.unwrap().value, "Result".to_string());
-    }
+    //#[test]
+    //fn ssm_fetch() {
+    //    let address = Address {
+    //        source: "ssm",
+    //        label: "GlenTest",
+    //        version: Some("1"),
+    //    };
+    //    let value = SSM::get(&address);
+    //
+    //    assert_eq!(value.secret.unwrap().value, "Result".to_string());
+    //}
 
     #[test]
     fn env_fetch() {
@@ -141,17 +141,20 @@ mod tests {
 
     #[test]
     fn custom_fetch() {
+        let command = Command::new("echo", None, None, KeyPosition::Last);
+        let mut commands = HashMap::<String, Command>::new();
+        commands.insert("echo".to_owned(), command);
         let address = Address {
-            source: "credstash",
-            label: "test",
-            version: Some("8"),
+            source: "echo",
+            label: "TEST",
+            version: None,
         };
         let config = Config {
-            commands: HashMap::<String, Command>::new(),
+            commands,
             placeholder: Placeholder::default(),
         };
         let value = Custom::get(&address, &config);
 
-        assert_eq!(value.secret.unwrap().value, "Result".to_string());
+        assert_eq!(value.secret.unwrap().value, "TEST\n".to_string());
     }
 }

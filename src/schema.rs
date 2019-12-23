@@ -94,7 +94,7 @@ mod tests {
         let placeholder = Placeholder::default();
 
         assert_eq!(
-            context("TEST", &placeholder).evaluate(&config),
+            context("TEST", &placeholder, None).evaluate(&config),
             "Result".to_string()
         );
     }
@@ -105,7 +105,7 @@ mod tests {
         let placeholder = Placeholder::default();
 
         assert_eq!(
-            context("TEST2", &placeholder).evaluate(&config),
+            context("TEST2", &placeholder, None).evaluate(&config),
             "{{ env:TEST2 }}"
         )
     }
@@ -116,18 +116,18 @@ mod tests {
         let placeholder = Placeholder::default();
 
         assert_eq!(
-            context("TEST2", &placeholder).evaluate(&config),
+            context("TEST2", &placeholder, Some("3")).evaluate(&config),
             "{{ env:TEST2:3 }}"
         )
     }
 
-    fn context<'c>(label: &'c str, placeholder: &'c Placeholder) -> Context<'c> {
+    fn context<'c>(label: &'c str, placeholder: &'c Placeholder, version: Option<&'c str>) -> Context<'c> {
         Context {
             placeholder,
             address: Address {
                 source: "env",
                 label: label,
-                version: None,
+                version
             },
         }
     }

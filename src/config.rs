@@ -124,6 +124,15 @@ pub struct Command {
 }
 
 impl Command {
+    pub fn new(name: &str, flags: Option<Vec<String>>, ver: Option<VersionArg>, pos: KeyPosition) -> Self {
+        Command {
+            command: name.to_owned(),
+            flags,
+            version: ver,
+            position: pos
+        }
+    }
+
     pub fn run(&self, key: &str, ver: Option<&str>) -> Option<String> {
         let no_args = Vec::<String>::new();
         let flags = match &self.version {
@@ -264,6 +273,6 @@ mod tests {
         assert_eq!(placeholder.opening, "{{");
         assert_eq!(placeholder.separator, ":");
         assert_eq!(placeholder.closing, "}}");
-        assert_eq!(commands.len(), 1);
+        assert_eq!(commands.len(), 2);
     }
 }
