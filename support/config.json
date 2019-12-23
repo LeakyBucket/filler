@@ -1,0 +1,14 @@
+{
+    "commands": {
+        "credstash": {
+            "name": "credstash",
+            "command": "credstash",
+            "version": {
+                "flag": "-v",
+                "format": "Disperate"
+            },
+            "position": "Last"
+        }
+    },
+    "file_name": "whatever"
+}
